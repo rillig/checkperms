@@ -1,0 +1,74 @@
+.\"	$NetBSD: mdoc.template,v 1.7 2002/07/10 11:57:12 yamt Exp $
+.Dd October 7, 2006
+.Dt checkperms 1
+.Os
+.Sh NAME
+.Nm checkperms
+.Nd check and correct file permissions
+.Sh SYNOPSIS
+find * -print | checkperms
+.Op Fl cfnq
+.Sh DESCRIPTION
+The
+.Nm
+command reads a list of files from
+.Va stdin
+and checks for each line whether the file permissions of that file are
+reasonable or not.
+.Ss Options
+.Bl -tag -width xxxxxxxx
+.It Fl c
+Check the contents of executable files to have a known format.
+For example, Perl modules don't need to be executable at all.
+Currently, ELF and
+.Li #!
+are recognized.
+.It Fl e
+Treat any warnings as errors, that is, exit with a non-zero exit status.
+.It Fl f
+When given once, errors are fixed automatically.
+When given twice, most of the warnings are fixed, too.
+.It Fl n
+When given once, shows what would be fixed for
+.Fl f .
+When given twice, shows what would be fixed for
+.Fl ff .
+.It Fl q
+When this option is given, the summary line about the number of errors
+and warnings is not printed as the last line.
+.El
+.Sh EXIT STATUS
+Zero when no errors occured, non-zero otherwise.
+Warnings don't affect the exit status, unless the
+.Fl e
+option is given.
+.Sh ENVIRONMENT
+Nothing.
+.Sh FILES
+None.
+.Sh EXAMPLES
+.\" .Sh DIAGNOSTICS
+.Sh SEE ALSO
+.Xr find 1
+.Sh STANDARDS
+None.
+.Sh HISTORY
+.Nm
+was born in 2006.
+.Sh AUTHORS
+.An Roland Illig
+.Aq roland.illig@gmx.de
+.Sh CAVEATS
+None.
+.Sh BUGS
+None known.
+.Sh SECURITY CONSIDERATIONS
+.Bl -bullet
+.It
+There may be race conditions between reading the file permissions and
+writing the fixed ones.
+.It
+When directories are moved during a run of this program, permissions may
+be changed on foreign files.
+However, this requires good timing from the side of the attacker.
+.El
