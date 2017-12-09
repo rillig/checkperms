@@ -42,7 +42,29 @@
 #  define PRINTF_STYLE(fmt, args) /* nothing */
 #endif
 
-static char line[4096];
+typedef struct {
+	char *data;
+	size_t length;
+	size_t capacity;
+} Str;
+
+static void str_append(Str *str, char ch) {
+	if (str->length + 1 + 1 > str->capacity) {
+		str->capacity = str->capacity != 0 ? 2 * str->capacity : 4096;
+		str->data = realloc(str->data, str->capacity);
+		if (str->data == NULL) {
+			perror("str_append");
+			exit(EXIT_FAILURE);
+		}
+	}
+
+	assert(str->length < str->capacity);
+	str->data[str->length++] = ch;
+	assert(str->length < str->capacity);
+	str->data[str->length] = '\0';
+}
+
+static Str line;
 static int lineno;
 
 static int fix_flag = 0;
@@ -73,17 +95,14 @@ usage(void)
 
 /* Reads a line and returns it without the trailing '\n' character. It
  * checks for embedded NUL characters and terminates the process in this
- * case, as well as for too long lines.
+ * case.
  */
 static int
-read_line(char *buf, size_t bufsize)
+read_line(Str *line)
 {
-	size_t i;
 	int c;
 
-	assert(bufsize != 0);
-
-	i = 0;
+	line->length = 0;
 	for (;;) {
 		c = fgetc(stdin);
 		if (c == EOF)
@@ -94,17 +113,9 @@ read_line(char *buf, size_t bufsize)
 			fprintf(stderr, "<stdin>:%d: error: NUL character in input.\n", lineno);
 			exit(EXIT_FAILURE);
 		}
-		if (i + 1 < bufsize)
-			buf[i] = (char) c;
-		else if (i + 1 == bufsize) {
-			fprintf(stderr, "<stdin>:%d: error: Line too long.\n", lineno);
-			exit(EXIT_FAILURE);
-		}
-		i++;
+		str_append(line, (char) c);
 	}
 
-	assert(i < bufsize);
-	buf[i] = '\0';
 	return 1;
 }
 
@@ -486,8 +497,8 @@ main(int argc, char **argv)
 	if (optind != argc)
 		usage();
 
-	for (lineno = 1; read_line(line, sizeof(line)); lineno++)
-		check_perms(line);
+	for (lineno = 1; read_line(&line); lineno++)
+		check_perms(line.data);
 
 	if (!quiet_flag && (errors != 0 || warnings != 0))
 		printf("%d errors and %d warnings.\n", errors, warnings);
