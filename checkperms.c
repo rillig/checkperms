@@ -48,7 +48,8 @@ typedef struct {
 	size_t capacity;
 } Str;
 
-static void str_append(Str *str, char ch) {
+static void str_append(Str *str, char ch)
+{
 	if (str->length + 1 + 1 > str->capacity) {
 		str->capacity = str->capacity != 0 ? 2 * str->capacity : 4096;
 		str->data = realloc(str->data, str->capacity);
@@ -64,16 +65,13 @@ static void str_append(Str *str, char ch) {
 	str->data[str->length] = '\0';
 }
 
-static Str line;
-static int lineno;
-
 static int fix_flag = 0;
 static int noaction_flag = 0;
 static int quiet_flag = 0;
 static int content_flag = 0;
 static int error_flag = 0;
 
-static const char * const rwx[] = {
+static const char *const rwx[] = {
 	"---", "--x", "-w-", "-wx",
 	"r--", "r-x", "rw-", "rwx"
 };
@@ -110,10 +108,10 @@ read_line(Str *line)
 		if (c == '\n')
 			break;
 		if (c == '\0') {
-			fprintf(stderr, "<stdin>:%d: error: NUL character in input.\n", lineno);
+			fprintf(stderr, "<stdin>: error: NUL character in input.\n");
 			exit(EXIT_FAILURE);
 		}
-		str_append(line, (char) c);
+		str_append(line, (char)c);
 	}
 
 	return 1;
@@ -195,7 +193,7 @@ should_clear_x_bit(const char *fname, mode_t perms)
 		return 1;
 	}
 	magic = (((unsigned long)buf[0]) << 24)
-	      | (((unsigned long)buf[1]) << 16)
+		| (((unsigned long)buf[1]) << 16)
 	      | (((unsigned long)buf[2]) <<  8)
 	      | (((unsigned long)buf[3]) <<  0);
 
@@ -311,14 +309,16 @@ check_perms(const char *fname)
 			warn_fixed &= ~000111;
 		}
 
-		if (g &~ u) {
-			warning("%s: group permissions (%s) are higher than owner permissions (%s).", fname, rwx[g], rwx[u]);
+		if (g & ~u) {
+			warning("%s: group permissions (%s) are higher than owner permissions (%s).",
+				fname, rwx[g], rwx[u]);
 			wont_fix_this_warning();
 			m |= g << 6;
 		}
 
-		if (o &~ g) {
-			warning("%s: other permissions (%s) are higher than group permissions (%s).", fname, rwx[o], rwx[g]);
+		if (o & ~g) {
+			warning("%s: other permissions (%s) are higher than group permissions (%s).",
+				fname, rwx[o], rwx[g]);
 			wont_fix_this_warning();
 			m |= o << 3;
 		}
@@ -364,7 +364,7 @@ check_perms(const char *fname)
 
 		} else {
 			warning("%s: unchecked mode %04o/%04o for file.",
-			    fname, (unsigned int)unfixed, m);
+				fname, (unsigned int)unfixed, m);
 		}
 
 	} else if (S_ISDIR(st.st_mode)) {
@@ -386,14 +386,16 @@ check_perms(const char *fname)
 			warn_fixed |= 000001;
 		}
 
-		if (g &~ u) {
-			warning("%s: group permissions (%s) are higher than owner permissions (%s).", fname, rwx[g], rwx[u]);
+		if (g & ~u) {
+			warning("%s: group permissions (%s) are higher than owner permissions (%s).",
+				fname, rwx[g], rwx[u]);
 			wont_fix_this_warning();
 			m |= g << 6;
 		}
 
-		if (o &~ g) {
-			warning("%s: other permissions (%s) are higher than group permissions (%s).", fname, rwx[o], rwx[g]);
+		if (o & ~g) {
+			warning("%s: other permissions (%s) are higher than group permissions (%s).",
+				fname, rwx[o], rwx[g]);
 			wont_fix_this_warning();
 			m |= o << 3;
 		}
@@ -428,7 +430,7 @@ check_perms(const char *fname)
 
 		} else {
 			warning("%s: unchecked mode %04o/%04o for directory.",
-			    fname, (unsigned int)unfixed, m);
+				fname, (unsigned int)unfixed, m);
 		}
 
 #if defined(S_ISLNK) && defined(S_ISSOCK)
@@ -451,18 +453,14 @@ check_perms(const char *fname)
 	if ((fix_flag || noaction_flag) && fixed != unfixed) {
 		if (noaction_flag) {
 			note("%s: would fix permissions from %04o to %04o.",
-			    fname,
-			    (unsigned int)unfixed,
-			    (unsigned int)fixed);
+			     fname, (unsigned int)unfixed, (unsigned int)fixed);
 
 		} else if (chmod(fname, fixed) == -1) {
 			error("%s: Cannot fix permissions: %s.", fname, strerror(errno));
 
 		} else {
 			note("%s: fixed permissions from %04o to %04o.",
-			    fname,
-			    (unsigned int)unfixed,
-			    (unsigned int)fixed);
+			     fname, (unsigned int)unfixed, (unsigned int)fixed);
 		}
 	}
 }
@@ -470,6 +468,7 @@ check_perms(const char *fname)
 int
 main(int argc, char **argv)
 {
+	Str line;
 	int c;
 
 	while ((c = getopt(argc, argv, options)) != -1) {
@@ -497,12 +496,14 @@ main(int argc, char **argv)
 	if (optind != argc)
 		usage();
 
-	for (lineno = 1; read_line(&line); lineno++)
+	while (read_line(&line))
 		check_perms(line.data);
 
 	if (!quiet_flag && (errors != 0 || warnings != 0))
 		printf("%d errors and %d warnings.\n", errors, warnings);
 	if (error_flag && warnings != 0)
 		return EXIT_FAILURE;
-	return (errors != 0) ? EXIT_FAILURE : EXIT_SUCCESS;
+	if (errors != 0)
+		return EXIT_FAILURE;
+	return EXIT_SUCCESS;
 }
