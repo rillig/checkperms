@@ -433,8 +433,13 @@ check_perms(const char *fname)
 				fname, (unsigned int)unfixed, m);
 		}
 
-#if defined(S_ISLNK) && defined(S_ISSOCK)
-	} else if (S_ISLNK(st.st_mode) || S_ISSOCK(st.st_mode)) {
+#if defined(S_ISLNK)
+	} else if (S_ISLNK(st.st_mode)) {
+		/* Fine. */
+#endif
+
+#if defined(S_ISSOCK)
+	} else if (S_ISSOCK(st.st_mode)) {
 		/* Fine. */
 #endif
 
