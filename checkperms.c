@@ -162,9 +162,10 @@ wont_fix_this_warning(void)
 static int
 should_clear_x_bit(const char *fname, mode_t perms)
 {
-	unsigned char buf[4];
-	size_t len;
-	int f;
+	unsigned char buf[4];	/* the first four bytes of the file */
+	unsigned long magic;	/* the same, packed into one machine word */
+	size_t len;		/* length of the filename */
+	int f;			/* the file to be checked */
 
 	/* Only check executable files. */
 	if ((perms & 000111) == 000000)
@@ -187,13 +188,18 @@ should_clear_x_bit(const char *fname, mode_t perms)
 		(void)close(f);
 		return 1;
 	}
+	magic = (((unsigned long)buf[0]) << 24)
+	      | (((unsigned long)buf[1]) << 16)
+	      | (((unsigned long)buf[2]) <<  8)
+	      | (((unsigned long)buf[3]) <<  0);
 
 	(void)close(f);
 
-	/* \x7fELF */
-	if (buf[0] == 0x7f && buf[1] == 0x45 && buf[2] == 0x4C && buf[3] == 0x46)
+	/* ELF binaries */
+	if (memcmp(buf, "\177ELF", 4) == 0)
 		return 0;
 
+	/* #!-style Scripts */
 	if (buf[0] == '#' && buf[1] == '!') {
 		if (buf[2] == '/')
 			return 0;
@@ -203,16 +209,32 @@ should_clear_x_bit(const char *fname, mode_t perms)
 		warning("%s: #! without a following slash.", fname);
 	}
 
-	/* AIX binaries */
-	if (buf[0] == 0x01 && buf[1] == 0xdf && buf[2] == 0x00 && buf[3] == 0x04)
+	/* Microsoft Windows binaries */
+	if (memcmp(buf, "MZ", 2) == 0)
 		return 0;
 
+	/* AIX binaries */
+	if (magic == 0x01df0004U)
+		return 0;
 	/* AIX libraries */
 	if (memcmp(buf, "<big", 4) == 0)
 		return 0;
 
-	/* Mac OS X binaries */
-	if (buf[0] == 0xfe && buf[1] == 0xed && buf[2] == 0xfa && buf[3] == 0xce)
+	/* ppc Mac OS X binaries */
+	if (magic == 0xfeedfaceU)
+		return 0;
+	/* ppc64 Mac OS X binaries */
+	if (magic == 0xfeedfacfU)
+		return 0;
+	/* i386 Mac OS X binaries */
+	if (magic == 0xcefaedfeU)
+		return 0;
+	/* Universal Mac OS X binaries (yes, they look like Java class files) */
+	if (magic == 0xcafebabeU)
+		return 0;
+
+	/* Microsoft Windows, MS-DOS, Mono */
+	if (memcmp(buf, "MZ", 2) == 0)
 		return 0;
 
 	/* As a special case, libtool libraries may have the executable bit,
@@ -236,8 +258,15 @@ static void
 check_perms(const char *fname)
 {
 	struct stat st;
-	unsigned int m, u, g, o;
-	mode_t unfixed, err_fixed, warn_fixed, fixed;
+	unsigned int m;		/* mode without the file type */
+	unsigned int u;		/* permissions of the user */
+	unsigned int g;		/* permissions of the group */
+	unsigned int o;		/* permissions of all others */
+	mode_t unfixed;		/* the original permissions */
+	mode_t err_fixed;	/* permissions after all errors have been fixed */
+	mode_t warn_fixed;	/* permissions after all errors and warnings have been fixed */
+	mode_t fixed;		/* either err_fixed or warn_fixed, depending
+				 * on the number of -f options */
 
 	/* Make sure that the following bit manipulations work
 	 * as expected.
@@ -393,7 +422,13 @@ check_perms(const char *fname)
 			    fname, (unsigned int)unfixed, m);
 		}
 
-	} else if (S_ISLNK(st.st_mode)) {
+	} else if (S_ISLNK(st.st_mode) || S_ISSOCK(st.st_mode)) {
+		/* Fine. */
+
+	} else if (S_ISCHR(st.st_mode) || S_ISBLK(st.st_mode)) {
+		/* Fine. */
+
+	} else if (S_ISFIFO(st.st_mode)) {
 		/* Fine. */
 
 	} else {
