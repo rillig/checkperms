@@ -1,3 +1,7 @@
+Version 1.4 (2006-11-02):
+	Added support for Mac OS X binaries and dynamic libraries.
+	Added support for AIX binaries and libraries.
+
 Version 1.3 (2006-11-02):
 	Allowed libtool libraries whose name does not start with "lib".
 

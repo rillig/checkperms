@@ -203,6 +203,18 @@ should_clear_x_bit(const char *fname, mode_t perms)
 		warning("%s: #! without a following slash.", fname);
 	}
 
+	/* AIX binaries */
+	if (buf[0] == 0x01 && buf[1] == 0xdf && buf[2] == 0x00 && buf[3] == 0x04)
+		return 0;
+
+	/* AIX libraries */
+	if (memcmp(buf, "<big", 4) == 0)
+		return 0;
+
+	/* Mac OS X binaries */
+	if (buf[0] == 0xfe && buf[1] == 0xed && buf[2] == 0xfa && buf[3] == 0xce)
+		return 0;
+
 	/* As a special case, libtool libraries may have the executable bit,
 	 * although they probably don't need it.
 	 */
