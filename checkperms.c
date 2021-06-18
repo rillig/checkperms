@@ -55,13 +55,14 @@ static int fix_flag = 0;
 static int noaction_flag = 0;
 static int quiet_flag = 0;
 static int content_flag = 0;
+static int error_flag = 0;
 
 static const char * const rwx[] = {
 	"---", "--x", "-w-", "-wx",
 	"r--", "r-x", "rw-", "rwx"
 };
 
-static const char options[] = "cfnq";
+static const char options[] = "cefnq";
 
 
 /* The number of errors and warnings that have occurred so far. */
@@ -488,5 +489,7 @@ main(int argc, char **argv)
 
 	if (!quiet_flag && (errors != 0 || warnings != 0))
 		printf("%d errors and %d warnings.\n", errors, warnings);
+	if (error_flag && warnings != 0)
+		return EXIT_FAILURE;
 	return (errors != 0) ? EXIT_FAILURE : EXIT_SUCCESS;
 }
