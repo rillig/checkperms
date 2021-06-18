@@ -42,12 +42,6 @@
 #  define PRINTF_STYLE(fmt, args) /* nothing */
 #endif
 
-#if defined(__NetBSD__)
-#  define CHMOD_FUNCTION	lchmod
-#else
-#  define CHMOD_FUNCTION	chmod
-#endif
-
 static char line[4096];
 static int lineno;
 
@@ -445,7 +439,7 @@ check_perms(const char *fname)
 			    (unsigned int)unfixed,
 			    (unsigned int)fixed);
 
-		} else if (CHMOD_FUNCTION(fname, fixed) == -1) {
+		} else if (chmod(fname, fixed) == -1) {
 			error("%s: Cannot fix permissions: %s.", fname, strerror(errno));
 
 		} else {

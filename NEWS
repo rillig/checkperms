@@ -1,3 +1,9 @@
+Version 1.9 (2007-09-22):
+	Made the code simpler: For regular files, chmod and lchmod
+	behave the same.
+	Provide a preformatted man page with the package, to get rid
+	of the build dependency for groff.
+
 Version 1.8 (2007-06-18):
 	Added the -e option, which treats warnings like errors.
 

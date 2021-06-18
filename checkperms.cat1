@@ -1,0 +1,68 @@
+checkperms(1)           NetBSD General Commands Manual           checkperms(1)
+
+NNAAMMEE
+     cchheecckkppeerrmmss -- check and correct file permissions
+
+SSYYNNOOPPSSIISS
+     find * -print | checkperms [--ccffnnqq]
+
+DDEESSCCRRIIPPTTIIOONN
+     The cchheecckkppeerrmmss command reads a list of files from _s_t_d_i_n and checks for
+     each line whether the file permissions of that file are reasonable or
+     not.
+
+   OOppttiioonnss
+     --cc        Check the contents of executable files to have a known format.
+               For example, Perl modules don't need to be executable at all.
+               Currently, ELF and #! are recognized.
+
+     --ee        Treat any warnings as errors, that is, exit with a non-zero
+               exit status.
+
+     --ff        When given once, errors are fixed automatically.  When given
+               twice, most of the warnings are fixed, too.
+
+     --nn        When given once, shows what would be fixed for --ff.  When given
+               twice, shows what would be fixed for --ffff.
+
+     --qq        When this option is given, the summary line about the number of
+               errors and warnings is not printed as the last line.
+
+EEXXIITT SSTTAATTUUSS
+     Zero when no errors occured, non-zero otherwise.  Warnings don't affect
+     the exit status, unless the --ee option is given.
+
+EENNVVIIRROONNMMEENNTT
+     Nothing.
+
+FFIILLEESS
+     None.
+
+EEXXAAMMPPLLEESS
+SSEEEE AALLSSOO
+     find(1)
+
+SSTTAANNDDAARRDDSS
+     None.
+
+HHIISSTTOORRYY
+     cchheecckkppeerrmmss was born in 2006.
+
+AAUUTTHHOORRSS
+     Roland Illig <roland.illig@gmx.de>
+
+CCAAVVEEAATTSS
+     None.
+
+BBUUGGSS
+     None known.
+
+SSEECCUURRIITTYY CCOONNSSIIDDEERRAATTIIOONNSS
+     ··   There may be race conditions between reading the file permissions and
+         writing the fixed ones.
+
+     ··   When directories are moved during a run of this program, permissions
+         may be changed on foreign files.  However, this requires good timing
+         from the side of the attacker.
+
+NetBSD 4.0                      October 7, 2006                     NetBSD 4.0
