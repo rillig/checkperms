@@ -1,3 +1,6 @@
+Version 1.3 (2006-11-02):
+	Allowed libtool libraries whose name does not start with "lib".
+
 Version 1.2 (2006-10-25):
 	Libtool libraries (*.la) may keep the executable bit.
 

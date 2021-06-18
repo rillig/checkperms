@@ -208,10 +208,11 @@ should_clear_x_bit(const char *fname, mode_t perms)
 	 */
 	len = strlen(fname);
 	if (len >= 3 && strcmp(fname + len - 3, ".la") == 0) {
-		/* The first line is of the form:
+		/* The first line looks like one of the following.
 		 * # libIex.la - a libtool library file
+		 * # pango-arabic-fc.la - a libtool library file
 		 */
-		if (memcmp(buf, "# li", 4) == 0)
+		if (memcmp(buf, "# ", 2) == 0)
 			return 0;
 	}
 
