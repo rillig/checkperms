@@ -54,11 +54,14 @@ static int lineno;
 static int fix_flag = 0;
 static int noaction_flag = 0;
 static int quiet_flag = 0;
+static int content_flag = 0;
 
 static const char * const rwx[] = {
 	"---", "--x", "-w-", "-wx",
 	"r--", "r-x", "rw-", "rwx"
 };
+
+static const char options[] = "cfnq";
 
 
 /* The number of errors and warnings that have occurred so far. */
@@ -69,7 +72,7 @@ static void
 usage(void)
 {
 
-	fprintf(stderr, "usage: checkperms [-fnq]\n");
+	fprintf(stderr, "usage: checkperms [-%s]\n", options);
 	exit(EXIT_FAILURE);
 }
 
@@ -152,9 +155,55 @@ static void
 wont_fix_this_warning(void)
 {
 
-	if (fix_flag >= 2 || noaction_flag >= 2) {
-		fprintf(stdout, "note: won't fix this.\n");
+	if (fix_flag >= 2 || noaction_flag >= 2)
+		note("won't fix this.");
+}
+
+static int
+should_clear_x_bit(const char *fname, mode_t perms)
+{
+	unsigned char buf[4];
+	int f;
+
+	/* Only check executable files. */
+	if ((perms & 000111) == 000000)
+		return 0;
+
+	if ((f = open(fname, O_RDONLY)) == -1) {
+
+		if ((perms & 006000) == 0) {
+			/* Only emit a warning if the file doesn't have
+			 * the set-uid or set-gid bit set, in which case
+			 * the read bit may be cleared intentionally.
+			 */
+			warning("%s: could not be read.", fname);
+		}
+		return 0;
 	}
+
+	if (read(f, buf, sizeof(buf)) != 4) {
+		warning("%s: too small to be a valid executable file.", fname);
+		(void)close(f);
+		return 1;
+	}
+
+	(void)close(f);
+
+	/* \x7fELF */
+	if (buf[0] == 0x7f && buf[1] == 0x45 && buf[2] == 0x4C && buf[3] == 0x46)
+		return 1;
+
+	if (buf[0] == '#' && buf[1] == '!') {
+		if (buf[2] == '/')
+			return 1;
+		if (buf[2] == ' ' && buf[3] == '/')
+			return 1;
+
+		warning("%s: #! without a following slash.", fname);
+	}
+
+	warning("%s: executable bit is set on non-executable file.", fname);
+	return 0;
 }
 
 static void
@@ -192,6 +241,11 @@ check_perms(const char *fname)
 	o = (m & 000007) >> 0;
 
 	if (S_ISREG(st.st_mode)) {
+
+		if (content_flag && should_clear_x_bit(fname, m)) {
+			m &= ~000111;
+			warn_fixed &= ~000111;
+		}
 
 		if (g &~ u) {
 			warning("%s: group permissions (%s) are higher than owner permissions (%s).", fname, rwx[g], rwx[u]);
@@ -346,8 +400,11 @@ main(int argc, char **argv)
 {
 	int c;
 
-	while ((c = getopt(argc, argv, "fnq")) != -1) {
+	while ((c = getopt(argc, argv, options)) != -1) {
 		switch (c) {
+		case 'c':
+			content_flag = 1;
+			break;
 		case 'f':
 			fix_flag++;
 			break;

@@ -7,7 +7,7 @@
 .Nd check and correct file permissions
 .Sh SYNOPSIS
 find * -print | checkperms
-.Op Fl fnq
+.Op Fl cfnq
 .Sh DESCRIPTION
 The
 .Nm
@@ -17,6 +17,12 @@ and checks for each line whether the file permissions of that file are
 reasonable or not.
 .Ss Options
 .Bl -tag -width xxxxxxxx
+.It Fl c
+Check the contents of executable files to have a known format.
+For example, Perl modules don't need to be executable at all.
+Currently, ELF and
+.Li #!
+are recognized.
 .It Fl f
 When given once, errors are fixed automatically.
 When given twice, most of the warnings are fixed, too.
