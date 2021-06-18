@@ -461,6 +461,9 @@ main(int argc, char **argv)
 		case 'c':
 			content_flag = 1;
 			break;
+		case 'e':
+			error_flag = 1;
+			break;
 		case 'f':
 			fix_flag++;
 			break;

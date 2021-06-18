@@ -1,3 +1,6 @@
+Version 1.10 (2007-09-27):
+	Made the -e flag work.
+
 Version 1.9 (2007-09-22):
 	Made the code simpler: For regular files, chmod and lchmod
 	behave the same.
