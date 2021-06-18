@@ -1,0 +1,9 @@
+Version 1.2 (2006-10-25):
+	Libtool libraries (*.la) may keep the executable bit.
+
+Version 1.1 (2006-10-24):
+	The new -c option checks whether files that have the executable
+	bit set are really executable.
+
+Version 1.0 (October 6, 2006)
+	Initial release.

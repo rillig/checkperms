@@ -163,6 +163,7 @@ static int
 should_clear_x_bit(const char *fname, mode_t perms)
 {
 	unsigned char buf[4];
+	size_t len;
 	int f;
 
 	/* Only check executable files. */
@@ -191,19 +192,31 @@ should_clear_x_bit(const char *fname, mode_t perms)
 
 	/* \x7fELF */
 	if (buf[0] == 0x7f && buf[1] == 0x45 && buf[2] == 0x4C && buf[3] == 0x46)
-		return 1;
+		return 0;
 
 	if (buf[0] == '#' && buf[1] == '!') {
 		if (buf[2] == '/')
-			return 1;
+			return 0;
 		if (buf[2] == ' ' && buf[3] == '/')
-			return 1;
+			return 0;
 
 		warning("%s: #! without a following slash.", fname);
 	}
 
+	/* As a special case, libtool libraries may have the executable bit,
+	 * although they probably don't need it.
+	 */
+	len = strlen(fname);
+	if (len >= 3 && strcmp(fname + len - 3, ".la") == 0) {
+		/* The first line is of the form:
+		 * # libIex.la - a libtool library file
+		 */
+		if (memcmp(buf, "# li", 4) == 0)
+			return 0;
+	}
+
 	warning("%s: executable bit is set on non-executable file.", fname);
-	return 0;
+	return 1;
 }
 
 static void
